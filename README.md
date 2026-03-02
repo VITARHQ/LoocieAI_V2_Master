@@ -15,19 +15,32 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
-Endpoints:
-	•	GET /  → status payload
+Endpoints
+	•	GET / → status payload
 	•	GET /health → {“healthy”: true}
 	•	Docs: http://127.0.0.1:8000/docs
-Notes:
+
+Notes
 	•	.env is local-only (not committed)
 	•	.venv/ is local-only (not committed)
 	•	404 for favicon/apple-touch icons in logs is normal
-Repo Structure:
+
+Repo Structure
  LoocieAI_V2_Master/
  app/
-__init__.py
+ __init__.py
  main.py
+ api/
+ __init__.py
+ router.py
+ routes/
+ __init__.py
+ root.py
+ health.py
+ core/
+ __init__.py
+ config.py
+ logging.py
  requirements.txt
  README.md
  .gitignore

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loocieai-v2-master"
+version = "0.2.1"
+description = "LoocieAI V2 Master FastAPI service"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "python-dotenv",
+]
+
+# IMPORTANT:
+# This is the "lock" — it tells setuptools to include app AND ALL subpackages
+# like app.api, app.api.routes, app.core, etc.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+exclude = ["tests*", "docs*"]

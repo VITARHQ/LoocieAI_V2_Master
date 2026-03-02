@@ -1,46 +1,26 @@
-# LoocieAI_V2_Master
 
-V2 Master Base Model (FastAPI skeleton) for Loocie’s SmartPackage Main Base Model (master).
+# Loocie AI — V2 Master (VITAR Division)
 
-## What this is
-A clean, minimal FastAPI service that proves:
-- the repo boots
-- the API responds
-- the structure is ready to expand (routers, services, models, etc.)
+**Product of iVenomLegacy Studios, LLC** **IP Held by Seven Holy Creations, LLC (SHC)**
 
-## Run (Mac)
+## 🚀 Overview
+Loocie is a high-performance, FastAPI-based AI Executive Engine. This V2 Master build implements the **Business Vault Standard (BVS)**, decoupling the core engine from encrypted business data.
+
+## 🏗 Project Structure
+Based on the current V2 repository:
+- `app/`: Core FastAPI application logic.
+- `api/`: Route definitions (`health`, `root`, `router`).
+- `core/`: System configuration, logging, and security baselines.
+- `env/`: Virtual environment and dependency management.
+
+## 🔒 Business Vault Standard (BVS)
+This engine requires an external encrypted Vault to be mounted.
+- **Root Path:** Defined by `LOOCIE_VAULT_PATH` environment variable.
+- **Isolation:** Each business unit (LU, MW, IVL) has its own isolated Vault.
+
+## 🛠 Setup (Mac/Linux)
+
+### 1) Create + Activate Virtual Environment
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
-Endpoints
-	•	GET / → status payload
-	•	GET /health → {“healthy”: true}
-	•	Docs: http://127.0.0.1:8000/docs
-
-Notes
-	•	.env is local-only (not committed)
-	•	.venv/ is local-only (not committed)
-	•	404 for favicon/apple-touch icons in logs is normal
-
-Repo Structure
- LoocieAI_V2_Master/
- app/
- __init__.py
- main.py
- api/
- __init__.py
- router.py
- routes/
- __init__.py
- root.py
- health.py
- core/
- __init__.py
- config.py
- logging.py
- requirements.txt
- README.md
- .gitignore

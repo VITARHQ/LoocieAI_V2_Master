@@ -16,10 +16,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator
 
 class Settings(BaseSettings):
-“””
+"""
 Central configuration object for the Loocie AI Engine.
 All values are loaded from the .env file or environment variables.
-“””
+"""
 
 ```
 model_config = SettingsConfigDict(
@@ -111,12 +111,12 @@ def vault_is_configured(self) -> bool:
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-“””
+"""
 Returns a cached Settings singleton.
 Call invalidate_settings_cache() in tests to reset.
-“””
+"""
 return Settings()
 
 def invalidate_settings_cache() -> None:
-“”“Clears the settings cache. Use in tests or after .env changes.”””
+"""Clears the settings cache. Use in tests or after .env changes."""
 get_settings.cache_clear()

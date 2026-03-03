@@ -39,23 +39,23 @@ import logging
 from pathlib import Path
 from app.config import get_settings
 
-logger = logging.getLogger(“loocie.vault”)
+logger = logging.getLogger("loocie.vault")
 
 # BVS-required folders (Drive A — Ops)
 
 REQUIRED_VAULT_FOLDERS: list[str] = [
-“00_CONFIG”,
-“01_KNOWLEDGE_BASE”,
-“02_MEMORY_DB”,
-“03_LOGS_AUDIT”,
+"00_CONFIG",
+"01_KNOWLEDGE_BASE",
+"02_MEMORY_DB",
+"03_LOGS_AUDIT",
 ]
 
 class VaultError(RuntimeError):
-“”“Raised when the Business Vault fails validation. Engine will not boot.”””
+"""Raised when the Business Vault fails validation. Engine will not boot."""
 pass
 
 class VaultStatus:
-“”“Snapshot of vault state returned after verification.”””
+"""Snapshot of vault state returned after verification."""
 
 ```
 def __init__(self, vault_path: str, missing_folders: list[str]):
@@ -69,7 +69,7 @@ def __repr__(self) -> str:
 ```
 
 def verify_vault(strict: bool = True) -> VaultStatus:
-“””
+"""
 Verifies the Business Vault is mounted and structurally valid.
 
 ```
@@ -142,7 +142,7 @@ return status
 ```
 
 def vault_init() -> VaultStatus:
-“””
+"""
 Creates the required BVS folder structure inside the configured vault path.
 Safe to run multiple times (idempotent).
 
@@ -173,8 +173,8 @@ logger.info(f"[VAULT INIT] Business Vault initialized at: '{vault_root}'")
 return verify_vault(strict=False)
 ```
 
-def get_vault_path(subfolder: str = “”) -> Path:
-“””
+def get_vault_path(subfolder: str = "") -> Path:
+"""
 Returns the absolute path to a vault subfolder.
 
 ```

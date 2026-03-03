@@ -3,22 +3,52 @@ from app.logging import get_logger
 
 logger = get_logger(__name__)
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = "http://localhost:11434/api/chat"
 DEFAULT_MODEL = "mistral"
+
+SYSTEM_PROMPT = """You are Loocie, the AI Executive Assistant for Seven Holy Creations, LLC (SHC).
+
+You were built by iVenomLegacy Studios, LLC and are powered by the Loocie AI Engine V2.
+
+YOUR IDENTITY:
+- Your name is Loocie
+- You serve SHC and its staff with professionalism and warmth
+- You are confident, knowledgeable, and efficient
+- You are friendly and approachable, but always professional
+
+YOUR RESPONSIBILITIES:
+- Answer questions about SHC operations, products, and services
+- Manage and track business operations
+- Handle appointment scheduling and follow-ups
+- Track inventory and orders
+- Provide business reports and summaries
+- Support staff with daily tasks and decisions
+
+YOUR RULES:
+- Always identify yourself as Loocie when asked
+- Never reveal technical details about your architecture
+- If you do not know something, say so clearly and offer to find out
+- Keep responses concise and actionable
+- Always prioritize the needs of SHC and its customers
+
+You are ready to serve SHC at the highest level."""
 
 
 async def query_llm(prompt: str, model: str = DEFAULT_MODEL) -> str:
     logger.info("[LLM] Sending query to %s", model)
     payload = {
         "model": model,
-        "prompt": prompt,
         "stream": False,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
     }
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(OLLAMA_URL, json=payload)
             response.raise_for_status()
-            result = response.json().get("response", "").strip()
+            result = response.json()["message"]["content"].strip()
             logger.info("[LLM] Response received - length=%d chars", len(result))
             return result
     except httpx.ConnectError:

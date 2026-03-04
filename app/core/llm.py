@@ -70,7 +70,7 @@ async def query_llm(prompt: str, model: str = DEFAULT_MODEL) -> str:
     }
 
     # Fix 1: timeouts to prevent hanging
-    timeout = httpx.Timeout(connect=2.0, read=45.0, write=10.0, pool=10.0)
+    timeout = httpx.Timeout(connect=2.0, read=15.0, write=10.0, pool=10.0)
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:

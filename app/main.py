@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import os
+import asyncio
 
 import httpx
 from dotenv import load_dotenv
@@ -25,6 +26,9 @@ def _get_api_key() -> str | None:
 
 
 async def warmup_ollama(model: str = DEFAULT_MODEL) -> None:
+    """
+    Best-effort warmup. Should never block server startup.
+    """
     ollama_url = "http://localhost:11434/api/chat"
     payload = {
         "model": model,
@@ -32,7 +36,8 @@ async def warmup_ollama(model: str = DEFAULT_MODEL) -> None:
         "messages": [{"role": "user", "content": "warm up"}],
     }
 
-    timeout = httpx.Timeout(connect=1.5, read=15.0, write=10.0, pool=10.0)
+    # Keep warmup short; it's optional.
+    timeout = httpx.Timeout(connect=1.5, read=8.0, write=8.0, pool=8.0)
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -57,7 +62,8 @@ async def lifespan(app: FastAPI):
         else:
             logger.info("[VAULT] Business Vault verified at %s", status.vault_path)
 
-    await warmup_ollama(model=DEFAULT_MODEL)
+    # IMPORTANT: do warmup in the background so startup never blocks
+    asyncio.create_task(warmup_ollama(model=DEFAULT_MODEL))
 
     api_key = _get_api_key()
     if api_key:
@@ -86,7 +92,6 @@ async def api_key_middleware(request: Request, call_next):
 
     expected = _get_api_key()
     if not expected:
-        # dev-friendly: if no key set, do not enforce
         return await call_next(request)
 
     provided = request.headers.get("X-API-Key", "")

@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+
+import httpx
 from dotenv import load_dotenv
+from fastapi import FastAPI
 
 load_dotenv()
 
@@ -14,9 +16,39 @@ setup_logging(level="DEBUG" if settings.is_dev else "INFO")
 logger = get_logger(__name__)
 
 
+async def warmup_ollama(model: str = "mistral") -> None:
+    """
+    A) Auto-warmup: Send a tiny request to Ollama on startup so the first real user request
+    isn't the cold-start hit.
+
+    - Uses short timeouts so it never blocks startup.
+    - Logs success/failure but never prevents the API from starting.
+    """
+    ollama_url = "http://localhost:11434/api/chat"
+    payload = {
+        "model": model,
+        "stream": False,
+        "messages": [{"role": "user", "content": "warm up"}],
+    }
+
+    # Keep this fast and non-blocking for startup
+    timeout = httpx.Timeout(connect=1.5, read=6.0, write=6.0, pool=6.0)
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            r = await client.post(ollama_url, json=payload)
+            r.raise_for_status()
+        logger.info("[WARMUP] Ollama warmup OK (model=%s)", model)
+    except Exception as e:
+        # Don't block startup if Ollama isn't ready
+        logger.warning("[WARMUP] Ollama warmup skipped/failed (model=%s): %s", model, str(e))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("[ENGINE] Loocie AI V2 starting up - env=%s", settings.loocie_env)
+
+    # Vault verification
     if settings.is_production:
         verify_vault(strict=True)
         logger.info("[VAULT] Business Vault verified")
@@ -26,6 +58,10 @@ async def lifespan(app: FastAPI):
             logger.warning("[VAULT] Not mounted - vault features disabled in dev")
         else:
             logger.info("[VAULT] Business Vault verified at %s", status.vault_path)
+
+    # A) Auto-warmup Ollama (non-blocking)
+    await warmup_ollama(model="mistral")
+
     logger.info("[ENGINE] Startup complete - ready to serve requests")
     yield
     logger.info("[ENGINE] Loocie AI shutting down")

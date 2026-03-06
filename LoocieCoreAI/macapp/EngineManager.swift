@@ -201,14 +201,23 @@ final class EngineManager: ObservableObject {
         errPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             if !data.isEmpty, let text = String(data: data, encoding: .utf8) {
-                Self.debugLog("ENGINE STDERR: \(text.trimmingCharacters(in: .whitespacesAndNewlines))")
+                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    Self.debugLog("ENGINE STDERR: \(trimmed)")
+                }
             }
         }
 
         outPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             if !data.isEmpty, let text = String(data: data, encoding: .utf8) {
-                Self.debugLog("ENGINE STDOUT: \(text.trimmingCharacters(in: .whitespacesAndNewlines))")
+                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.contains("GET /health") || trimmed.contains("GET /status") {
+                    return
+                }
+                if !trimmed.isEmpty {
+                    Self.debugLog("ENGINE STDOUT: \(trimmed)")
+                }
             }
         }
 

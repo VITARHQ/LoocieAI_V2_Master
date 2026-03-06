@@ -137,12 +137,12 @@ final class EngineManager: ObservableObject {
         }
 
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.executableURL = URL(fileURLWithPath: "/Volumes/LoocieCoreAI/BuildCache/_Python/loocie-v2-venv/bin/python")
+        process.currentDirectoryURL = URL(fileURLWithPath: "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/engine")
         process.arguments = [
-            "-lc",
-            """
-            source "/Volumes/LoocieCoreAI/BuildCache/_Python/loocie-v2-venv/bin/activate" &&             cd "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/engine" &&             exec python -m uvicorn app.main:app --host 127.0.0.1 --port 8080
-            """
+            "-m", "uvicorn", "app.main:app",
+            "--host", "127.0.0.1",
+            "--port", "8080"
         ]
 
         let outPipe = Pipe()

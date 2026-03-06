@@ -5,13 +5,13 @@ import Combine
 final class EngineManager: ObservableObject {
     private static let debugLogPath = "/Volumes/LoocieCoreAI/Logs/loociecoreai-launch.log"
 
-    private static func debugLog(_ message: String) {
+    nonisolated private static func debugLog(_ message: String) {
         let line = "[\(Date())] \(message)\n"
         let url = URL(fileURLWithPath: debugLogPath)
         let data = Data(line.utf8)
         if FileManager.default.fileExists(atPath: debugLogPath) {
             if let handle = try? FileHandle(forWritingTo: url) {
-                try? handle.seekToEnd()
+                _ = try? handle.seekToEnd()
                 try? handle.write(contentsOf: data)
                 try? handle.close()
             }

@@ -184,3 +184,37 @@ cython_debug/
 __pycache__/
 *.pyc.DS_Store
 app/.DS_Store
+# --- Loocie local/private runtime ---
+LoocieVaults/
+vault/
+vaults/
+data/
+runtime/
+memory/
+logs/
+Logs/
+
+# --- Local databases ---
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+
+# --- Xcode / Swift / Apple local build files ---
+DerivedData/
+.build/
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# --- macOS ---
+.DS_Store
+**/.DS_Store
+
+# --- Local engine/run artifacts ---
+uvicorn.log
+*.pid

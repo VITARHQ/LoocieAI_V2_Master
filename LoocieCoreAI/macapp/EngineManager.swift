@@ -4,7 +4,7 @@ import Combine
 import Security
 
 final class EngineManager: ObservableObject {
-    private static let debugLogPath = "/Volumes/LoocieCoreAI/Logs/loociecoreai-launch.log"
+    nonisolated private static let debugLogPath = "/Volumes/LoocieCoreAI/Logs/loociecoreai-launch.log"
 
     nonisolated private static func debugLog(_ message: String) {
         let line = "[\(Date())] \(message)\n"

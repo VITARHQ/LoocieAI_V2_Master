@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import Security
 
 final class EngineManager: ObservableObject {
     static let shared = EngineManager()
@@ -8,8 +9,22 @@ final class EngineManager: ObservableObject {
     @Published var engineOnline: Bool = false
     @Published var modelOnline: Bool = false
     @Published var lastError: String = ""
-    @Published var baseURLString: String = "http://127.0.0.1:8080"
-    @Published var apiKey: String = ""
+
+    @Published var baseURLString: String = "http://127.0.0.1:8080" {
+        didSet {
+            UserDefaults.standard.set(baseURLString, forKey: Self.baseURLDefaultsKey)
+        }
+    }
+
+    @Published var apiKey: String = "" {
+        didSet {
+            if apiKey.isEmpty {
+                Self.deleteAPIKeyFromKeychain()
+            } else {
+                Self.saveAPIKeyToKeychain(apiKey)
+            }
+        }
+    }
 
     private var pollTask: Task<Void, Never>?
     private var engineProcess: Process?
@@ -17,7 +32,15 @@ final class EngineManager: ObservableObject {
 
     private let launcherPath = "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/macapp/scripts/START_ENGINE_FOREGROUND.sh"
 
+    private static let baseURLDefaultsKey = "LoocieCoreAI.baseURL"
+    private static let keychainService = "HIP.LoocieCoreAI"
+    private static let keychainAccount = "engine_api_key"
+
     private init() {
+        let savedBaseURL = UserDefaults.standard.string(forKey: Self.baseURLDefaultsKey)
+        self.baseURLString = savedBaseURL?.isEmpty == false ? savedBaseURL! : "http://127.0.0.1:8080"
+        self.apiKey = Self.loadAPIKeyFromKeychain() ?? ""
+
         Task {
             await ensureEngineRunning()
             startPolling()
@@ -161,5 +184,51 @@ final class EngineManager: ObservableObject {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
         return false
+    }
+
+    private static func saveAPIKeyToKeychain(_ value: String) {
+        guard let data = value.data(using: .utf8) else { return }
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+
+        SecItemDelete(query as CFDictionary)
+
+        var addQuery = query
+        addQuery[kSecValueData as String] = data
+        SecItemAdd(addQuery as CFDictionary, nil)
+    }
+
+    private static func loadAPIKeyFromKeychain() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let value = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+
+        return value
+    }
+
+    private static func deleteAPIKeyFromKeychain() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+        SecItemDelete(query as CFDictionary)
     }
 }

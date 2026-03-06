@@ -10,6 +10,10 @@ struct ContentView: View {
         if engine.engineOnline && engine.modelOnline {
             return "Ready"
         }
+        if engine.lastError == "Health failed: The operation couldn’t be completed. Operation not permitted"
+            || engine.lastError == "Health failed: The operation couldn't be completed. Operation not permitted" {
+            return "Starting engine..."
+        }
         if !engine.lastError.isEmpty {
             return engine.lastError
         }
@@ -19,18 +23,31 @@ struct ContentView: View {
         return "Starting up..."
     }
 
+    private var engineLabel: String {
+        if engine.engineOnline { return "Online" }
+        if statusText == "Starting engine..." || statusText == "Starting up..." { return "Starting" }
+        return "Offline"
+    }
+
+    private var modelLabel: String {
+        if engine.modelOnline { return "Online" }
+        if engine.engineOnline && !engine.modelOnline { return "Loading" }
+        if statusText == "Starting engine..." || statusText == "Starting up..." { return "Waiting" }
+        return "Offline"
+    }
+
     var body: some View {
         VStack(spacing: 10) {
             HStack(spacing: 14) {
                 Circle()
                     .frame(width: 10, height: 10)
-                    .foregroundStyle(engine.engineOnline ? .green : .red)
-                Text("Engine: \(engine.engineOnline ? "Online" : "Offline")")
+                    .foregroundStyle(engine.engineOnline ? .green : .orange)
+                Text("Engine: \(engineLabel)")
 
                 Circle()
                     .frame(width: 10, height: 10)
                     .foregroundStyle(engine.modelOnline ? .green : .orange)
-                Text("Model: \(engine.modelOnline ? "Online" : "Offline")")
+                Text("Model: \(modelLabel)")
 
                 Spacer()
 

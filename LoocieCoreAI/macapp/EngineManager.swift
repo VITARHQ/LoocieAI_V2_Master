@@ -45,6 +45,7 @@ final class EngineManager: ObservableObject {
 
     private var pollTask: Task<Void, Never>?
     private var engineProcess: Process?
+    private var enginePID: Int32?
     private var appStartedEngine: Bool = false
 
     private let launcherPath = "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/macapp/scripts/START_ENGINE_FOREGROUND.sh"
@@ -138,13 +139,25 @@ final class EngineManager: ObservableObject {
     }
 
     func stopOwnedEngine() {
-        guard appStartedEngine, let process = engineProcess else { return }
+        Self.debugLog("STOP REQUEST appStartedEngine= \(appStartedEngine) enginePID= \(enginePID.map(String.init) ?? "nil")")
 
-        if process.isRunning {
+        guard appStartedEngine else {
+            Self.debugLog("STOP SKIPPED: appStartedEngine is false")
+            return
+        }
+
+        if let process = engineProcess, process.isRunning {
+            Self.debugLog("STOP terminating Process pid= \(process.processIdentifier)")
             process.terminate()
+        } else if let pid = enginePID {
+            Self.debugLog("STOP terminating via kill pid= \(pid)")
+            kill(pid, SIGTERM)
+        } else {
+            Self.debugLog("STOP FAILED: no process or pid")
         }
 
         engineProcess = nil
+        enginePID = nil
         appStartedEngine = false
 
         Task { @MainActor in
@@ -222,7 +235,9 @@ final class EngineManager: ObservableObject {
             Self.debugLog("ENGINE LAUNCH args= \(process.arguments ?? [])")
             try process.run()
             engineProcess = process
+            enginePID = process.processIdentifier
             appStartedEngine = true
+            Self.debugLog("ENGINE STARTED pid= \(process.processIdentifier)")
         } catch {
             await MainActor.run {
                 self.lastError = "Failed to start engine: \(error.localizedDescription)"

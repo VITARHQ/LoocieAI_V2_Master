@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ContentView: View {
     @EnvironmentObject var engine: EngineManager
@@ -6,22 +7,42 @@ struct ContentView: View {
     @State private var conversationId: String = "core"
     @State private var chatLog: [String] = ["LoocieCoreAI: Core Companion ready."]
 
+    private var statusText: String {
+        if engine.engineOnline && engine.modelOnline {
+            return "Ready"
+        }
+        if !engine.lastError.isEmpty {
+            return engine.lastError
+        }
+        if engine.engineOnline && !engine.modelOnline {
+            return "Engine online. Waiting for model."
+        }
+        return "Starting up..."
+    }
+
     var body: some View {
         VStack(spacing: 10) {
             HStack(spacing: 14) {
-                Circle().frame(width: 10, height: 10)
+                Circle()
+                    .frame(width: 10, height: 10)
                     .foregroundStyle(engine.engineOnline ? .green : .red)
                 Text("Engine: \(engine.engineOnline ? "Online" : "Offline")")
 
-                Circle().frame(width: 10, height: 10)
+                Circle()
+                    .frame(width: 10, height: 10)
                     .foregroundStyle(engine.modelOnline ? .green : .orange)
                 Text("Model: \(engine.modelOnline ? "Online" : "Offline")")
 
                 Spacer()
-                Text(engine.lastError)
+
+                Text(statusText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+
+                Button("Settings") {
+                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                }
             }
             .padding(.horizontal)
             .padding(.top, 8)
@@ -45,6 +66,7 @@ struct ContentView: View {
             HStack {
                 TextField("Type message…", text: $message)
                     .textFieldStyle(.roundedBorder)
+                    .onSubmit { send() }
 
                 Button("Send") { send() }
                     .disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -68,7 +90,7 @@ struct ContentView: View {
         }
 
         guard !engine.apiKey.isEmpty else {
-            chatLog.append("LoocieCoreAI: Paste X-API-Key in Settings (LOOCIE_INTERNAL_KEY).")
+            chatLog.append("LoocieCoreAI: API key missing in Settings.")
             return
         }
 

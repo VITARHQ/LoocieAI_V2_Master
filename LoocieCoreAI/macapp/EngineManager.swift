@@ -1,7 +1,6 @@
 import Foundation
 import SwiftUI
 import Combine
-import Security
 
 final class EngineManager: ObservableObject {
     static let shared = EngineManager()
@@ -18,11 +17,7 @@ final class EngineManager: ObservableObject {
 
     @Published var apiKey: String = "" {
         didSet {
-            if apiKey.isEmpty {
-                Self.deleteAPIKeyFromKeychain()
-            } else {
-                Self.saveAPIKeyToKeychain(apiKey)
-            }
+            UserDefaults.standard.set(apiKey, forKey: Self.apiKeyDefaultsKey)
         }
     }
 
@@ -33,13 +28,14 @@ final class EngineManager: ObservableObject {
     private let launcherPath = "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/macapp/scripts/START_ENGINE_FOREGROUND.sh"
 
     private static let baseURLDefaultsKey = "LoocieCoreAI.baseURL"
-    private static let keychainService = "HIP.LoocieCoreAI"
-    private static let keychainAccount = "engine_api_key"
+    private static let apiKeyDefaultsKey = "LoocieCoreAI.apiKey"
 
     private init() {
         let savedBaseURL = UserDefaults.standard.string(forKey: Self.baseURLDefaultsKey)
         self.baseURLString = savedBaseURL?.isEmpty == false ? savedBaseURL! : "http://127.0.0.1:8080"
-        self.apiKey = Self.loadAPIKeyFromKeychain() ?? ""
+
+        let savedAPIKey = UserDefaults.standard.string(forKey: Self.apiKeyDefaultsKey)
+        self.apiKey = savedAPIKey ?? ""
 
         Task {
             await ensureEngineRunning()
@@ -129,13 +125,6 @@ final class EngineManager: ObservableObject {
             return
         }
 
-        guard FileManager.default.isExecutableFile(atPath: launcherPath) else {
-            await MainActor.run {
-                self.lastError = "Launcher not executable: \(self.launcherPath)"
-            }
-            return
-        }
-
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/Volumes/LoocieCoreAI/BuildCache/_Python/loocie-v2-venv/bin/python")
         process.currentDirectoryURL = URL(fileURLWithPath: "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/engine")
@@ -207,51 +196,5 @@ final class EngineManager: ObservableObject {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
         return false
-    }
-
-    private static func saveAPIKeyToKeychain(_ value: String) {
-        guard let data = value.data(using: .utf8) else { return }
-
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: keychainAccount
-        ]
-
-        SecItemDelete(query as CFDictionary)
-
-        var addQuery = query
-        addQuery[kSecValueData as String] = data
-        SecItemAdd(addQuery as CFDictionary, nil)
-    }
-
-    private static func loadAPIKeyFromKeychain() -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: keychainAccount,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess,
-              let data = result as? Data,
-              let value = String(data: data, encoding: .utf8) else {
-            return nil
-        }
-
-        return value
-    }
-
-    private static func deleteAPIKeyFromKeychain() {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: keychainAccount
-        ]
-        SecItemDelete(query as CFDictionary)
     }
 }

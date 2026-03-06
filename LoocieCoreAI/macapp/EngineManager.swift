@@ -48,15 +48,13 @@ final class EngineManager: ObservableObject {
     private var enginePID: Int32?
     private var appStartedEngine: Bool = false
 
-    private let launcherPath = "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/macapp/scripts/START_ENGINE_FOREGROUND.sh"
-
     private static let baseURLDefaultsKey = "LoocieCoreAI.baseURL"
     private static let apiKeyDefaultsKey = "LoocieCoreAI.apiKey"
 
     private static func loadAPIKeyFromEngineEnv() -> String? {
         let path = "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/engine/.env"
         guard let text = try? String(contentsOfFile: path, encoding: .utf8) else { return nil }
-        for line in text.split(whereSeparator: \ .isNewline) {
+        for line in text.split(whereSeparator: \.isNewline) {
             if line.hasPrefix("LOOCIE_INTERNAL_KEY=") {
                 return String(line.split(separator: "=", maxSplits: 1).last ?? "")
             }
@@ -95,8 +93,6 @@ final class EngineManager: ObservableObject {
 
     @MainActor
     func refreshStatus() async {
-        print("LoocieCoreAI baseURLString=", baseURLString)
-
         guard let baseURL = baseURL else {
             engineOnline = false
             modelOnline = false
@@ -179,10 +175,6 @@ final class EngineManager: ObservableObject {
             self.lastError = "Launching engine..."
         }
 
-        await MainActor.run {
-            self.lastError = "Launching engine..."
-        }
-
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/Volumes/LoocieCoreAI/BuildCache/_Python/loocie-v2-venv/bin/python")
         process.currentDirectoryURL = URL(fileURLWithPath: "/Volumes/LoocieCoreAI/LoocieCoreAI_Core/LoocieAI_V2_Master/LoocieCoreAI/engine")
@@ -196,15 +188,6 @@ final class EngineManager: ObservableObject {
         let errPipe = Pipe()
         process.standardOutput = outPipe
         process.standardError = errPipe
-
-        process.terminationHandler = { proc in
-            Task { @MainActor in
-                if !self.engineOnline {
-                    self.lastError = "Engine process exited (code: \(proc.terminationStatus))"
-                }
-            }
-            Self.debugLog("ENGINE TERMINATED code= \(proc.terminationStatus)")
-        }
 
         process.terminationHandler = { proc in
             Task { @MainActor in

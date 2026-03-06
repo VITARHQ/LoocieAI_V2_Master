@@ -114,7 +114,8 @@ final class EngineManager: ObservableObject {
         }
 
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: launcherPath)
+        process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+        process.arguments = [launcherPath]
 
         let outPipe = Pipe()
         let errPipe = Pipe()

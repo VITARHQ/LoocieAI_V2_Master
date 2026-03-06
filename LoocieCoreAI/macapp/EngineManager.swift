@@ -217,8 +217,8 @@ final class EngineManager: ObservableObject {
         }
 
         do {
-            Self.debugLog("ENGINE LAUNCH executable= \(process.executableURL?.path ?? \"nil\")")
-            Self.debugLog("ENGINE LAUNCH cwd= \(process.currentDirectoryURL?.path ?? \"nil\")")
+            Self.debugLog("ENGINE LAUNCH executable= \(process.executableURL?.path ?? "nil")")
+            Self.debugLog("ENGINE LAUNCH cwd= \(process.currentDirectoryURL?.path ?? "nil")")
             Self.debugLog("ENGINE LAUNCH args= \(process.arguments ?? [])")
             try process.run()
             engineProcess = process
